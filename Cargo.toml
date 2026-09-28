@@ -1,0 +1,22 @@
+[package]
+name = "portctl"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["zh"]
+zh = []
+en = []
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+netstat2 = "0.11"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libproc = "0.14"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Threading"] }
