@@ -51,6 +51,7 @@ portctl list
 
 - **Protocol**: one of `TCP` / `UDP` / `*` (case-insensitive); `*` matches both protocols
 - **Omitting the protocol**: `/proto` may be omitted, or written as `/` (`*:8080/`), which is equivalent to `*`
+- **Omitting the IP**: `:3000` is equivalent to `*:3000` and matches all local IPs
 - **Wildcard `*`**:
   - For ip: matches all local IPs (`0.0.0.0`, `127.0.0.1`, LAN IPs, IPv6)
   - For port: matches any port in 0-65535
@@ -60,6 +61,7 @@ portctl list
 ### find — locate occupying processes
 
 ```bash
+portctl find :3000                # all IPs' port 3000, shorthand for *:3000
 portctl find *:8080               # port 8080 on all IPs, TCP+UDP together
 portctl find *:8080/TCP           # TCP only
 portctl find *:8080/UDP           # UDP only
