@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::ExitCode;
 
+use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{CommandFactory, Parser};
 
 mod cli;
@@ -87,7 +88,47 @@ fn main() -> ExitCode {
         libc::signal(libc::SIGPIPE, libc::SIG_DFL);
     }
 
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(e) => {
+            let kind = e.kind();
+            let info = match kind {
+                ErrorKind::UnknownArgument | ErrorKind::InvalidSubcommand => {
+                    let mut name = None;
+                    let mut suggestion = None;
+                    for (ck, cv) in e.context() {
+                        match (ck, cv) {
+                            (ContextKind::InvalidArg, ContextValue::String(s))
+                            | (ContextKind::InvalidSubcommand, ContextValue::String(s)) => {
+                                name = Some(s.clone())
+                            }
+                            (ContextKind::SuggestedArg, ContextValue::String(s)) => {
+                                suggestion = Some(s.clone())
+                            }
+                            (ContextKind::SuggestedSubcommand, ContextValue::Strings(v)) => {
+                                suggestion = v.first().cloned()
+                            }
+                            _ => {}
+                        }
+                    }
+                    name.map(|n| (n, suggestion))
+                }
+                _ => None,
+            };
+            match info {
+                Some((name, suggestion)) => {
+                    let msg = if kind == ErrorKind::InvalidSubcommand {
+                        i18n::unexpected_subcommand(&name, suggestion.as_deref())
+                    } else {
+                        i18n::unexpected_arg(&name, suggestion.as_deref())
+                    };
+                    eprintln!("{msg}");
+                    return ExitCode::FAILURE;
+                }
+                None => e.exit(),
+            }
+        }
+    };
     let result = match cli.sub_command {
         Some(Commands::Kill { target }) => run_kill(&target),
         Some(Commands::Find { target }) => run_find(&target),

@@ -2,9 +2,21 @@
 name = "portctl"
 version = "0.1.0"
 edition = "2024"
+description = "Cross-platform CLI to find, kill, and list processes occupying network ports (Linux / macOS / Windows)"
+license = "MIT"                    
+repository = "https://github.com/RowanCole/portctl"
+homepage = "https://github.com/RowanCole/portctl"   
+documentation = "https://docs.rs/portctl"           
+readme = "README.md"                               
+keywords = ["cli", "port"]                          
+
+
+[[bin]]
+name = "portctl"
+path = "src/main.rs"
 
 [features]
-default = ["zh"]
+default = ["en"]
 zh = []
 en = []
 

@@ -59,6 +59,22 @@ mod texts {
         format!("未找到占用 {target} 的进程")
     }
 
+    pub fn unexpected_arg(arg: &str, suggestion: Option<&str>) -> String {
+        let tip = match suggestion {
+            Some(s) => format!("；是不是想用 '{s}'？"),
+            None => "；运行 'portctl --help' 查看用法".to_string(),
+        };
+        format!("无法识别的参数: {arg}{tip}")
+    }
+
+    pub fn unexpected_subcommand(cmd: &str, suggestion: Option<&str>) -> String {
+        let tip = match suggestion {
+            Some(s) => format!("；是不是想用 '{s}'？"),
+            None => "；运行 'portctl --help' 查看用法".to_string(),
+        };
+        format!("无法识别的子命令: {cmd}{tip}")
+    }
+
     pub fn cannot_determine_pid() -> String {
         "无法确定占用端口的进程 PID，可能需要管理员/root 权限".to_string()
     }
@@ -130,6 +146,22 @@ Tips: /protocol is optional; omitted or empty means both TCP and UDP.
 
     pub fn not_found(target: &str) -> String {
         format!("No process found occupying {target}")
+    }
+
+    pub fn unexpected_arg(arg: &str, suggestion: Option<&str>) -> String {
+        let tip = match suggestion {
+            Some(s) => format!("; did you mean '{s}'?"),
+            None => "; run 'portctl --help' for usage".to_string(),
+        };
+        format!("Unrecognized argument: {arg}{tip}")
+    }
+
+    pub fn unexpected_subcommand(cmd: &str, suggestion: Option<&str>) -> String {
+        let tip = match suggestion {
+            Some(s) => format!("; did you mean '{s}'?"),
+            None => "; run 'portctl --help' for usage".to_string(),
+        };
+        format!("Unrecognized subcommand: {cmd}{tip}")
     }
 
     pub fn cannot_determine_pid() -> String {

@@ -1,129 +1,139 @@
 # portctl
 
-跨平台端口占用查看与管理工具，支持 Linux / macOS / Windows。
+Cross-platform tool for inspecting and managing port usage, supporting Linux / macOS / Windows.
 
-- **find**：查找占用指定端口的进程
-- **kill**：杀死占用指定端口的进程
-- **list**：列出系统所有端口使用情况
-- 支持通配符、IPv6、TCP/UDP 协议筛选，查找结果以表格输出
-- 通过 Cargo feature 支持中文 / 英文两种输出语言
+- **find**: find processes occupying a given port
+- **kill**: kill processes occupying a given port
+- **list**: list all port usage on the system
+- Supports wildcards, IPv6, and TCP/UDP protocol filtering; results are printed as a table
+- Output language (Chinese / English) selectable via Cargo features
 
-## 构建
+## Installation
+
+Install from [crates.io](https://crates.io/crates/portctl):
 
 ```bash
-cargo build --release
+cargo install portctl
 ```
 
-二进制文件位于 `target/release/portctl`。也可以直接安装到 PATH：
+Or build and install from source:
 
 ```bash
+git clone https://github.com/RowanCole/portctl
+cd portctl
 cargo install --path .
 ```
 
-切换输出语言：
+The binary is installed to `~/.cargo/bin/portctl` (make sure `~/.cargo/bin` is in your PATH).
+
+### Output language
+
+The output language is selected at compile time via Cargo features (`zh` and `en` are mutually exclusive):
 
 ```bash
-cargo build                                        # 中文（默认）
-cargo build --no-default-features --features en    # 英文
+cargo install portctl                                        # Chinese (default)
+cargo install portctl --no-default-features --features en    # English
+
+# when building from source
+cargo build                                                  # Chinese (default)
+cargo build --no-default-features --features en              # English
 ```
 
-> `zh` 与 `en` 两个 feature 互斥，不能同时启用。
+## Usage
 
-## 使用教程
-
-### 命令格式
+### Command format
 
 ```
-portctl find <ip:端口>[/协议]
-portctl kill <ip:端口>[/协议]
+portctl find <ip:port>[/proto]
+portctl kill <ip:port>[/proto]
 portctl list
 ```
 
-- **协议**：只能是 `TCP` / `UDP` / `*`（大小写不敏感），`*` 表示同时匹配两种协议
-- **省略协议**：`/协议` 可省略，或写 `/`（`*:8080/`），效果等同 `*`
-- **通配符 `*`**：
-  - 用于 ip：匹配本机所有 IP（等同 `0.0.0.0`、`127.0.0.1`、局域网 IP、IPv6）
-  - 用于端口：匹配 0-65535 任意端口
-  - 用于协议：同时匹配 TCP 和 UDP
-- **IPv6**：地址需加方括号，如 `[::1]:8080`
+- **Protocol**: one of `TCP` / `UDP` / `*` (case-insensitive); `*` matches both protocols
+- **Omitting the protocol**: `/proto` may be omitted, or written as `/` (`*:8080/`), which is equivalent to `*`
+- **Wildcard `*`**:
+  - For ip: matches all local IPs (`0.0.0.0`, `127.0.0.1`, LAN IPs, IPv6)
+  - For port: matches any port in 0-65535
+  - For protocol: matches both TCP and UDP
+- **IPv6**: the address must be wrapped in brackets, e.g. `[::1]:8080`
 
-### find — 查找占用进程
-
-```bash
-portctl find *:8080               # 所有 IP 的 8080 端口，TCP+UDP 一起查
-portctl find *:8080/TCP           # 只查 TCP
-portctl find *:8080/UDP           # 只查 UDP
-portctl find 127.0.0.1:8080/TCP   # 指定 IP + 指定协议
-portctl find '[::1]:8080/UDP'     # IPv6 地址
-```
-
-输出（中文版）：
-
-```
-PID     进程名   协议  本地地址       远程地址   状态
-------  -------  ----  -------------  ---------  ------
-199261  python3  TCP   0.0.0.0:18096  0.0.0.0:0  LISTEN
-```
-
-英文版表头为 `PID / PROCESS / PROTO / LOCAL / REMOTE / STATE`。UDP 没有"远程地址"和"状态"概念，以 `-` 占位。
-
-### kill — 杀死占用进程
+### find — locate occupying processes
 
 ```bash
-portctl kill *:8080               # TCP+UDP 占用者一起杀
-portctl kill *:8080/TCP           # 只杀 TCP 占用者
-portctl kill 127.0.0.1:8080/UDP   # 只杀指定 IP 的 UDP 占用者
+portctl find *:8080               # port 8080 on all IPs, TCP+UDP together
+portctl find *:8080/TCP           # TCP only
+portctl find *:8080/UDP           # UDP only
+portctl find 127.0.0.1:8080/TCP   # specific IP + specific protocol
+portctl find '[::1]:8080/UDP'     # IPv6 address
 ```
 
-输出示例：
+Output (English build):
 
 ```
-已杀死 PID=199261 进程名=python3
+PID     PROCESS  PROTO  LOCAL          REMOTE     STATE
+------  -------  ----   -------------  ---------  ------
+199261  python3  TCP    0.0.0.0:18096  0.0.0.0:0  LISTEN
 ```
 
-同一端口被多个进程占用时会逐个杀掉；全部成功返回退出码 0，有失败（如权限不足）则逐条报错并以非零退出码结束。
+UDP has no notion of "remote address" or "state"; those columns are filled with `-`.
 
-### list — 列出所有端口
+### kill — kill occupying processes
+
+```bash
+portctl kill *:8080               # kill all TCP+UDP occupants
+portctl kill *:8080/TCP           # kill TCP occupants only
+portctl kill 127.0.0.1:8080/UDP   # kill UDP occupants of a specific IP only
+```
+
+Example output:
+
+```
+Killed PID=199261 process=python3
+```
+
+When a port is occupied by multiple processes, they are killed one by one; exit code is 0 if all succeed, otherwise each failure (e.g. insufficient permissions) is reported and the command exits with a non-zero code.
+
+### list — list all ports
 
 ```bash
 portctl list
 ```
 
-输出系统当前全部 TCP/UDP 连接与监听，格式同 find，按协议和本地地址排序。
+Prints all current TCP/UDP connections and listeners on the system, in the same format as find, sorted by protocol and local address.
 
-### Shell 通配符注意事项
+### Shell wildcard caveats
 
-在 shell 中裸写 `*` 可能被展开成当前目录的文件名：
+A bare `*` in the shell may be expanded to file names in the current directory:
 
 ```bash
-portctl find *:8080        # 安全：*:8080 匹配不到文件名，原样传递
-portctl kill *:8080        # 同上
-portctl find *:8080/*      # 不安全：末尾 * 可能被展开，建议加引号
-portctl find '*:8080'      # 养成加引号的习惯最稳妥
+portctl find *:8080        # safe: *:8080 matches no file names, passed as-is
+portctl kill *:8080        # same as above
+portctl find *:8080/*      # unsafe: the trailing * may be expanded; prefer quoting
+portctl find '*:8080'      # quoting is always the safest habit
 ```
 
-### "未找到"提示格式
+### "Not found" message format
 
-找不到进程时，提示中的目标会被规范化显示：通配 ip 显示为 `0.0.0.0`，指定协议时带后缀：
+When no process is found, the target in the message is normalized: a wildcard IP is shown as `0.0.0.0`, and a specified protocol is appended as a suffix:
 
 ```
 $ portctl find *:57336/*
-未找到占用 0.0.0.0:57336 的进程
+No process found occupying 0.0.0.0:57336
 $ portctl find *:57336/TCP
-未找到占用 0.0.0.0:57336/TCP 的进程
+No process found occupying 0.0.0.0:57336/TCP
 ```
 
-## 权限说明
+## Permissions
 
-- 查看其他用户进程的 PID / 进程名，或杀死它们，可能需要 **root / 管理员** 权限；权限不足时对应字段显示 `-` 或杀进程报错
-- kill 使用 `SIGKILL`（Linux/macOS）/ `TerminateProcess`（Windows），进程无法拦截，直接终止
+- Viewing the PID / process name of processes owned by other users, or killing them, may require **root / administrator** privileges; with insufficient permissions the corresponding fields show `-` or the kill fails with an error
+- kill uses `SIGKILL` (Linux/macOS) / `TerminateProcess` (Windows), which cannot be intercepted by the target process
 
-## 平台支持
+## Platform support
 
-| 平台   | 端口枚举方式        | 进程名获取                  | 杀进程              |
-| ------ | ------------------- | --------------------------- | ------------------- |
-| Linux  | procfs / netlink    | `/proc/{pid}/comm`          | `kill(SIGKILL)`     |
-| macOS  | libproc             | `libproc::proc_pid::name`   | `kill(SIGKILL)`     |
-| Windows| iphlpapi            | `QueryFullProcessImageNameW`| `TerminateProcess`  |
+| Platform | Port enumeration   | Process name lookup          | Kill                |
+| -------- | ------------------ | ---------------------------- | ------------------- |
+| Linux    | procfs / netlink   | `/proc/{pid}/comm`           | `kill(SIGKILL)`     |
+| macOS    | libproc            | `libproc::proc_pid::name`    | `kill(SIGKILL)`     |
+| Windows  | iphlpapi           | `QueryFullProcessImageNameW` | `TerminateProcess`  |
 
-底层依赖 [netstat2](https://crates.io/crates/netstat2)，无需管理员权限即可查看基本端口信息。
+Built on top of [netstat2](https://crates.io/crates/netstat2); basic port information can be viewed without administrator privileges.
