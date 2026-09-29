@@ -1,6 +1,6 @@
 [package]
 name = "portctl"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Cross-platform CLI to find, kill, and list processes occupying network ports (Linux / macOS / Windows)"
 license = "MIT"                    
