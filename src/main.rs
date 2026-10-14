@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::Write;
 use std::process::ExitCode;
 
 use clap::error::{ContextKind, ContextValue, ErrorKind};
@@ -53,10 +54,35 @@ fn run_kill(target_str: &str) -> Result<(), String> {
         return Err(i18n::cannot_determine_pid());
     }
 
+    let processes: Vec<_> = pids
+        .into_iter()
+        .map(|pid| (pid, process_name(pid)))
+        .collect();
+    println!("{}", i18n::kill_confirmation_header());
+    for (pid, name) in &processes {
+        println!("{}", i18n::kill_candidate(*pid, name));
+    }
+    loop {
+        print!("{}", i18n::confirm_kill());
+        std::io::stdout()
+            .flush()
+            .map_err(|e| i18n::read_confirmation_failed(&e.to_string()))?;
+        let mut answer = String::new();
+        let bytes_read = std::io::stdin()
+            .read_line(&mut answer)
+            .map_err(|e| i18n::read_confirmation_failed(&e.to_string()))?;
+        match (bytes_read, answer.trim().to_ascii_lowercase().as_str()) {
+            (0, _) | (_, "n") => {
+                println!("{}", i18n::kill_cancelled());
+                return Ok(());
+            }
+            (_, "y") => break,
+            _ => println!("{}", i18n::invalid_confirmation()),
+        }
+    }
+
     let mut failed = 0usize;
-    for pid in pids {
-        // 必须在 kill 之前取进程名，进程被杀后名字将不可查
-        let name = process_name(pid);
+    for (pid, name) in processes {
         match kill_process(pid) {
             Ok(()) => println!("{}", i18n::killed(pid, &name)),
             Err(e) => {

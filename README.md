@@ -31,12 +31,12 @@ The binary is installed to `~/.cargo/bin/portctl` (make sure `~/.cargo/bin` is i
 The output language is selected at compile time via Cargo features (`zh` and `en` are mutually exclusive):
 
 ```bash
-cargo install portctl                                        # Chinese (default)
-cargo install portctl --no-default-features --features en    # English
+cargo install portctl                                        # English (default)
+cargo install portctl --no-default-features --features zh    # Chinese
 
 # when building from source
-cargo build                                                  # Chinese (default)
-cargo build --no-default-features --features en              # English
+cargo build                                                  # English (default)
+cargo build --no-default-features --features zh              # Chinese
 ```
 
 ## Usage
@@ -94,6 +94,8 @@ Killed PID=199261 process=python3
 ```
 
 When a port is occupied by multiple processes, they are killed one by one; exit code is 0 if all succeed, otherwise each failure (e.g. insufficient permissions) is reported and the command exits with a non-zero code.
+
+`kill` first lists the matching processes and asks for confirmation. Enter `y` to continue or `n` to cancel; other input is rejected and prompts again. If input ends, the operation is cancelled.
 
 ### list — list all ports
 

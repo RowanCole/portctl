@@ -1,4 +1,4 @@
-// 语言通过 feature 选择：默认中文（zh），英文用 --no-default-features --features en 构建
+// Language is selected via features: English is the default; use --no-default-features --features zh for Chinese.
 #[cfg(all(feature = "zh", feature = "en"))]
 compile_error!("features `zh` and `en` are mutually exclusive");
 
@@ -92,6 +92,30 @@ mod texts {
     pub fn kill_partial(failed: usize) -> String {
         format!("有 {failed} 个进程未能杀死")
     }
+
+    pub fn kill_confirmation_header() -> String {
+        "即将终止以下进程：".to_string()
+    }
+
+    pub fn kill_candidate(pid: u32, name: &str) -> String {
+        format!("  PID={pid} 进程名={name}")
+    }
+
+    pub fn confirm_kill() -> String {
+        "是否继续？[y/n] ".to_string()
+    }
+
+    pub fn invalid_confirmation() -> String {
+        "请输入 y 或 n。".to_string()
+    }
+
+    pub fn kill_cancelled() -> String {
+        "已取消。".to_string()
+    }
+
+    pub fn read_confirmation_failed(err: &str) -> String {
+        format!("读取确认输入失败: {err}")
+    }
 }
 
 #[cfg(feature = "en")]
@@ -133,7 +157,9 @@ Tips: /protocol is optional; omitted or empty means both TCP and UDP.
     }
 
     pub fn invalid_addr_format(s: &str) -> String {
-        format!("Invalid address: {s}, expected [ip:port][/protocol], e.g. 127.0.0.1:8080/TCP or *:8080")
+        format!(
+            "Invalid address: {s}, expected [ip:port][/protocol], e.g. 127.0.0.1:8080/TCP or *:8080"
+        )
     }
 
     pub fn invalid_ip(s: &str) -> String {
@@ -182,6 +208,30 @@ Tips: /protocol is optional; omitted or empty means both TCP and UDP.
 
     pub fn kill_partial(failed: usize) -> String {
         format!("{failed} process(es) failed to be killed")
+    }
+
+    pub fn kill_confirmation_header() -> String {
+        "The following processes will be terminated:".to_string()
+    }
+
+    pub fn kill_candidate(pid: u32, name: &str) -> String {
+        format!("  PID={pid} process={name}")
+    }
+
+    pub fn confirm_kill() -> String {
+        "Continue? [y/n] ".to_string()
+    }
+
+    pub fn invalid_confirmation() -> String {
+        "Please enter y or n.".to_string()
+    }
+
+    pub fn kill_cancelled() -> String {
+        "Cancelled.".to_string()
+    }
+
+    pub fn read_confirmation_failed(err: &str) -> String {
+        format!("Failed to read confirmation: {err}")
     }
 }
 
